@@ -1,0 +1,6 @@
+env: "local"
+client:
+  address: "localhost:8080"
+server:
+  host: "localhost"
+  port: "8080"
