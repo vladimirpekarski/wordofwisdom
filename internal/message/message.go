@@ -1,5 +1,9 @@
 package message
 
+type Message interface {
+	Challenge | Solution | BookRecord
+}
+
 type Challenge struct {
 	RandomStr  string
 	HashPrefix string

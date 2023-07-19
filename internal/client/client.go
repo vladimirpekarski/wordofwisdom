@@ -1,7 +1,6 @@
 package client
 
 import (
-	"encoding/gob"
 	"errors"
 	"fmt"
 	"net"
@@ -9,6 +8,7 @@ import (
 	"golang.org/x/exp/slog"
 
 	"github.com/vladimirpekarski/wordofwisdom/internal/message"
+	"github.com/vladimirpekarski/wordofwisdom/internal/message/gob"
 	"github.com/vladimirpekarski/wordofwisdom/internal/pow"
 )
 
@@ -37,27 +37,24 @@ func (c *Client) Quote() (string, string, error) {
 		_ = conn.Close()
 	}()
 
-	enc := gob.NewEncoder(conn)
-	dec := gob.NewDecoder(conn)
-
 	var ch message.Challenge
-	if err := dec.Decode(&ch); err != nil {
-		return "", "", fmt.Errorf("failed to decode: %w", err)
+	if err := gob.ReceiveMessage(conn, &ch); err != nil {
+		return "", "", fmt.Errorf("failed to receive challenge: %w", err)
 	}
 
-	c.log.Info("message received",
+	c.log.Info("challenge received",
 		slog.String("random_str", ch.RandomStr),
 		slog.String("hash_prefix", ch.HashPrefix))
 
 	sol := c.pow.Solve(ch)
-	err = enc.Encode(sol)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to encode: %w", err)
+
+	if err := gob.SendMessage(conn, sol); err != nil {
+		return "", "", fmt.Errorf("failed to send solution: %w", err)
 	}
 
 	var rec message.BookRecord
-	if err := dec.Decode(&rec); err != nil {
-		return "", "", fmt.Errorf("failed to decode: %w", err)
+	if err := gob.ReceiveMessage(conn, &rec); err != nil {
+		return "", "", fmt.Errorf("failed to receive book record: %w", err)
 	}
 
 	if rec.PassedValidation {

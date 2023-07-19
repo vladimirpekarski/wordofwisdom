@@ -29,7 +29,7 @@ func New() (Book, error) {
 }
 
 func (q Book) RandomQuote() Record {
-	s := rand.NewSource(time.Now().Unix())
+	s := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(s)
 	idx := r.Intn(len(q.Quotes))
 

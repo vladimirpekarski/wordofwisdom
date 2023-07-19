@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/gob"
 	"fmt"
 	"net"
 	"sync"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/vladimirpekarski/wordofwisdom/internal/book"
 	"github.com/vladimirpekarski/wordofwisdom/internal/message"
+	"github.com/vladimirpekarski/wordofwisdom/internal/message/gob"
 	"github.com/vladimirpekarski/wordofwisdom/internal/pow"
 )
 
@@ -102,18 +102,15 @@ func (s *Server) handleConnection(conn net.Conn) {
 		return
 	}
 
-	enc := gob.NewEncoder(conn)
-	dec := gob.NewDecoder(conn)
-
-	err = enc.Encode(ch)
-	if err != nil {
-		s.log.Error("failed to encode message", slog.String("error", err.Error()))
+	if err := gob.SendMessage(conn, ch); err != nil {
+		s.log.Error("failed to send message", slog.String("error", err.Error()))
 		return
 	}
 
 	var sl message.Solution
-	if err := dec.Decode(&sl); err != nil {
-		s.log.Error("failed to decode message", slog.String("error", err.Error()))
+	if err := gob.ReceiveMessage(conn, &sl); err != nil {
+		s.log.Error("failed to receive message", slog.String("error", err.Error()))
+		return
 	}
 
 	if s.pow.Validate(ch, sl) {
@@ -127,19 +124,16 @@ func (s *Server) handleConnection(conn net.Conn) {
 			PassedValidation: true,
 		}
 
-		err = enc.Encode(rec)
-		if err != nil {
-			s.log.Error("failed to encode message", slog.String("error", err.Error()))
+		if err := gob.SendMessage(conn, rec); err != nil {
+			s.log.Error("failed to send message", slog.String("error", err.Error()))
 			return
 		}
 	} else {
 		s.log.Debug("validation failed")
 
 		rec := message.BookRecord{}
-
-		err = enc.Encode(rec)
-		if err != nil {
-			s.log.Error("failed to encode message", slog.String("error", err.Error()))
+		if err := gob.SendMessage(conn, rec); err != nil {
+			s.log.Error("failed to send message", slog.String("error", err.Error()))
 			return
 		}
 	}
