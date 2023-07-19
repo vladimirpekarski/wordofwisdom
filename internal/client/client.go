@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"net"
 
-	"golang.org/x/exp/slog"
-
 	"github.com/vladimirpekarski/wordofwisdom/internal/message"
 	"github.com/vladimirpekarski/wordofwisdom/internal/message/gob"
 	"github.com/vladimirpekarski/wordofwisdom/internal/pow"
+	"golang.org/x/exp/slog"
 )
 
 type Client struct {

@@ -4,11 +4,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/vladimirpekarski/wordofwisdom/internal/message"
 	"golang.org/x/exp/rand"
 	"golang.org/x/exp/slog"
-	"strings"
-	"time"
 )
 
 type Pow struct {
