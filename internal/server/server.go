@@ -1,7 +1,10 @@
 package server
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
+	"github.com/vladimirpekarski/wordofwisdom/internal/pow"
 	"net"
 	"sync"
 	"time"
@@ -12,21 +15,25 @@ import (
 )
 
 type Server struct {
-	host       string
-	port       string
-	log        *slog.Logger
-	book       book.Book
-	wg         sync.WaitGroup
-	listener   net.Listener
-	shutdown   chan struct{}
-	connection chan net.Conn
+	host          string
+	port          string
+	log           *slog.Logger
+	book          book.Book
+	pow           pow.Pow
+	powDifficulty int
+	wg            sync.WaitGroup
+	listener      net.Listener
+	shutdown      chan struct{}
+	connection    chan net.Conn
 }
 
 type Params struct {
-	Host string
-	Port string
-	Log  *slog.Logger
-	Book book.Book
+	Host          string
+	Port          string
+	Log           *slog.Logger
+	Book          book.Book
+	Pow           pow.Pow
+	PowDifficulty int
 }
 
 func New(p Params) *Server {
@@ -35,13 +42,15 @@ func New(p Params) *Server {
 		panic(fmt.Sprintf("failed to start: %s", err.Error()))
 	}
 	return &Server{
-		host:       p.Host,
-		port:       p.Port,
-		log:        p.Log,
-		book:       p.Book,
-		listener:   l,
-		shutdown:   make(chan struct{}),
-		connection: make(chan net.Conn),
+		host:          p.Host,
+		port:          p.Port,
+		log:           p.Log,
+		book:          p.Book,
+		pow:           p.Pow,
+		powDifficulty: p.PowDifficulty,
+		listener:      l,
+		shutdown:      make(chan struct{}),
+		connection:    make(chan net.Conn),
 	}
 }
 
@@ -87,12 +96,60 @@ func (s *Server) handleConnection(conn net.Conn) {
 		_ = conn.Close()
 	}()
 
-	responseStr := s.book.RandomQuote()
-	n, err := conn.Write([]byte(responseStr))
-	s.log.Info("", slog.Int("n", n))
+	ch, err := s.pow.GenerateChallenge(16, s.powDifficulty)
 	if err != nil {
-		panic(err)
+		s.log.Error("failed to get challenge", slog.String("error", err.Error()))
+		return
 	}
+
+	buf := new(bytes.Buffer)
+	gobobj := gob.NewEncoder(buf)
+	err = gobobj.Encode(ch)
+	if err != nil {
+		s.log.Error("failed to encode message", slog.String("error", err.Error()))
+		return
+	}
+
+	_, err = conn.Write(buf.Bytes())
+	if err != nil {
+		s.log.Error("failed to send message", slog.String("error", err.Error()))
+		return
+	}
+
+	dec := gob.NewDecoder(conn)
+
+	var sl pow.Solution
+
+	if err := dec.Decode(&sl); err != nil {
+		s.log.Error("failed to decode message", slog.String("error", err.Error()))
+	}
+
+	if s.pow.Validate(ch, sl) {
+		s.log.Debug("passed validation")
+
+		q := s.book.RandomQuote()
+
+		rec := pow.Record{
+			Quote:  q.Quote,
+			Author: q.Author,
+		}
+
+		buf := new(bytes.Buffer)
+		gobobj := gob.NewEncoder(buf)
+		err = gobobj.Encode(rec)
+		if err != nil {
+			s.log.Error("failed to encode message", slog.String("error", err.Error()))
+			return
+		}
+
+		_, err = conn.Write(buf.Bytes())
+		if err != nil {
+			s.log.Error("failed to send message", slog.String("error", err.Error()))
+			return
+		}
+	}
+
+	//responseStr := s.book.RandomQuote()
 }
 
 func (s *Server) Stop() {

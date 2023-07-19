@@ -28,11 +28,10 @@ func New() (Book, error) {
 	return b, nil
 }
 
-func (q Book) RandomQuote() string {
+func (q Book) RandomQuote() Record {
 	s := rand.NewSource(time.Now().Unix())
 	r := rand.New(s)
 	idx := r.Intn(len(q.Quotes))
-	rec := q.Quotes[idx].Quote + " by " + q.Quotes[idx].Author
 
-	return rec
+	return q.Quotes[idx]
 }

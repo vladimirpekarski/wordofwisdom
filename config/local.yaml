@@ -4,3 +4,4 @@ client:
 server:
   host: "localhost"
   port: "8080"
+  difficulty: 4

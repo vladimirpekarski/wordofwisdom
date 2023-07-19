@@ -14,8 +14,9 @@ type Config struct {
 }
 
 type Server struct {
-	Host string `yaml:"host" env-default:"localhost" env-required:"true"`
-	Port string `yaml:"port" env-default:"8080" env-required:"true"`
+	Host       string `yaml:"host" env-default:"localhost" env-required:"true"`
+	Port       string `yaml:"port" env-default:"8080" env-required:"true"`
+	Difficulty int    `yaml:"difficulty" env-default:"4" env-required:"true"`
 }
 
 type Client struct {
