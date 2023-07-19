@@ -2,7 +2,7 @@ env: "local"
 client:
   address: "localhost:8080"
   connections: 1
-  timeout: 2s
+  timeout: 5s
 server:
   host: "localhost"
   port: "8080"

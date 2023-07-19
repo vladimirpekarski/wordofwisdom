@@ -2,7 +2,7 @@ env: "docker_compose"
 client:
   address: "server:8080"
   connections: 10
-  timeout: 2s
+  timeout: 5s
 server:
   host: "0.0.0.0"
   port: "8080"
