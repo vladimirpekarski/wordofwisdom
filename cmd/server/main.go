@@ -5,12 +5,13 @@ import (
 	"os/signal"
 	"syscall"
 
+	"golang.org/x/exp/slog"
+
 	"github.com/vladimirpekarski/wordofwisdom/internal/book"
 	"github.com/vladimirpekarski/wordofwisdom/internal/config"
 	"github.com/vladimirpekarski/wordofwisdom/internal/lib/logger"
 	"github.com/vladimirpekarski/wordofwisdom/internal/pow"
 	"github.com/vladimirpekarski/wordofwisdom/internal/server"
-	"golang.org/x/exp/slog"
 )
 
 func main() {

@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"sync"
+
+	"golang.org/x/exp/slog"
+
 	"github.com/vladimirpekarski/wordofwisdom/internal/client"
 	"github.com/vladimirpekarski/wordofwisdom/internal/config"
 	"github.com/vladimirpekarski/wordofwisdom/internal/lib/logger"
 	"github.com/vladimirpekarski/wordofwisdom/internal/pow"
-	"golang.org/x/exp/slog"
-	"sync"
 )
 
 func main() {

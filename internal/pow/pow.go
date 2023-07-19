@@ -8,9 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vladimirpekarski/wordofwisdom/internal/message"
 	"golang.org/x/exp/rand"
 	"golang.org/x/exp/slog"
+
+	"github.com/vladimirpekarski/wordofwisdom/internal/message"
 )
 
 type Pow struct {
