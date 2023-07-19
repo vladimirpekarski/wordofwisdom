@@ -1,7 +1,9 @@
 package server
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -108,7 +110,9 @@ func (s *Server) handleConnection(conn net.Conn) {
 
 	var sl message.Solution
 	if err := gob.ReceiveMessage(conn, &sl); err != nil {
-		s.log.Error("failed to receive message", slog.String("error", err.Error()))
+		if !errors.Is(err, io.EOF) {
+			s.log.Error("failed to receive solution", slog.String("error", err.Error()))
+		}
 		return
 	}
 
@@ -124,7 +128,9 @@ func (s *Server) handleConnection(conn net.Conn) {
 		}
 
 		if err := gob.SendMessage(conn, rec); err != nil {
-			s.log.Error("failed to send message", slog.String("error", err.Error()))
+			if !errors.Is(err, io.EOF) {
+				s.log.Error("failed to send quote", slog.String("error", err.Error()))
+			}
 			return
 		}
 	} else {
@@ -132,7 +138,9 @@ func (s *Server) handleConnection(conn net.Conn) {
 
 		rec := message.BookRecord{}
 		if err := gob.SendMessage(conn, rec); err != nil {
-			s.log.Error("failed to send message", slog.String("error", err.Error()))
+			if !errors.Is(err, io.EOF) {
+				s.log.Error("failed to send empty quote", slog.String("error", err.Error()))
+			}
 			return
 		}
 	}
@@ -152,7 +160,7 @@ func (s *Server) Stop() {
 	case <-done:
 		return
 	case <-time.After(time.Second):
-		s.log.Warn("Timed out waiting for connections to finish.")
+		s.log.Warn("timed out to graceful shutdown")
 		return
 	}
 }

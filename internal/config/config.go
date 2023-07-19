@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -20,8 +21,9 @@ type Server struct {
 }
 
 type Client struct {
-	Address     string `yaml:"address" env-default:"server:8080" env-required:"true"`
-	Connections int    `yaml:"connections" env-default:"1" env-required:"true"`
+	Address     string        `yaml:"address" env-default:"server:8080" env-required:"true"`
+	Connections int           `yaml:"connections" env-default:"1" env-required:"true"`
+	Timeout     time.Duration `yaml:"timeout" env-default:"10s" env-required:"true"`
 }
 
 func MustLoad() *Config {

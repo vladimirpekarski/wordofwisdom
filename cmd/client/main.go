@@ -1,13 +1,13 @@
 package main
 
 import (
-	"sync"
-
+	"context"
 	"github.com/vladimirpekarski/wordofwisdom/internal/client"
 	"github.com/vladimirpekarski/wordofwisdom/internal/config"
 	"github.com/vladimirpekarski/wordofwisdom/internal/lib/logger"
 	"github.com/vladimirpekarski/wordofwisdom/internal/pow"
 	"golang.org/x/exp/slog"
+	"sync"
 )
 
 func main() {
@@ -27,10 +27,13 @@ func main() {
 
 	wg.Add(conns)
 
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)
+	defer cancel()
+
 	for i := 0; i < conns; i++ {
 		go func() {
 			defer wg.Done()
-			quote, author, err := c.Quote()
+			quote, author, err := c.Quote(ctx)
 			if err != nil {
 				log.Error("failed to get quote", slog.String("error", err.Error()))
 				return

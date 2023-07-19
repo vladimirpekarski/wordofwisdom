@@ -20,7 +20,7 @@ func SendMessage[T message.Message](rw io.ReadWriter, message T) error {
 func ReceiveMessage[T message.Message](rw io.ReadWriter, message *T) error {
 	dec := gob.NewDecoder(rw)
 	if err := dec.Decode(message); err != nil {
-		return fmt.Errorf("failed to send receive: %w", err)
+		return fmt.Errorf("failed to receive message: %w", err)
 	}
 
 	return nil

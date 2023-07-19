@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -25,13 +26,11 @@ func New(address string, log *slog.Logger, pow pow.Pow) *Client {
 	}
 }
 
-func (c *Client) Quote() (string, string, error) {
+func (c *Client) Quote(ctx context.Context) (string, string, error) {
 	conn, err := net.Dial("tcp", c.address)
-
 	if err != nil {
 		return "", "", fmt.Errorf("failed to connect: %w", err)
 	}
-
 	defer func() {
 		_ = conn.Close()
 	}()
@@ -45,7 +44,10 @@ func (c *Client) Quote() (string, string, error) {
 		slog.String("random_str", ch.RandomStr),
 		slog.String("hash_prefix", ch.HashPrefix))
 
-	sol := c.pow.Solve(ch)
+	sol, err := c.pow.Solve(ctx, ch)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to solve challenge: %w", err)
+	}
 
 	if err := gob.SendMessage(conn, sol); err != nil {
 		return "", "", fmt.Errorf("failed to send solution: %w", err)

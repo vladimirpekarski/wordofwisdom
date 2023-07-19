@@ -1,6 +1,7 @@
 package pow
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -37,23 +38,28 @@ func (p Pow) GenerateChallenge(n, difficulty int) (message.Challenge, error) {
 	return ch, nil
 }
 
-func (p Pow) Solve(ch message.Challenge) message.Solution {
+func (p Pow) Solve(ctx context.Context, ch message.Challenge) (message.Solution, error) {
 	start := time.Now()
 	nonce := 0
 
 	for {
-		hash := p.calcHash(fmt.Sprintf("%s%d", ch.RandomStr, nonce))
-		if strings.HasPrefix(hash, ch.HashPrefix) {
-			p.Log.Info("solved",
-				slog.Int("elapsed_time, ms", int(time.Since(start).Milliseconds())),
-				slog.Int("nonce", nonce))
-			return message.Solution{
-				Hash:  hash,
-				Nonce: nonce,
+		select {
+		case <-ctx.Done():
+			return message.Solution{}, ctx.Err()
+		default:
+			hash := p.calcHash(fmt.Sprintf("%s%d", ch.RandomStr, nonce))
+			if strings.HasPrefix(hash, ch.HashPrefix) {
+				p.Log.Info("solved",
+					slog.Int("elapsed_time, ms", int(time.Since(start).Milliseconds())),
+					slog.Int("nonce", nonce))
+				return message.Solution{
+					Hash:  hash,
+					Nonce: nonce,
+				}, nil
 			}
+			p.Log.Debug("wrong solving", slog.String("wrong_hash", hash))
+			nonce++
 		}
-		p.Log.Debug("wrong solving", slog.String("wrong_hash", hash))
-		nonce++
 	}
 }
 
