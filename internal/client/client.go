@@ -10,16 +10,30 @@ import (
 
 	"github.com/vladimirpekarski/wordofwisdom/internal/message"
 	"github.com/vladimirpekarski/wordofwisdom/internal/message/gob"
-	"github.com/vladimirpekarski/wordofwisdom/internal/pow"
 )
 
-type Client struct {
-	address string
-	log     *slog.Logger
-	pow     pow.Pow
+//go:generate go run github.com/vektra/mockery/v2@v2.28.2 --name=Solver
+type Solver interface {
+	Solve(ctx context.Context, ch message.Challenge) (message.Solution, error)
 }
 
-func New(address string, log *slog.Logger, pow pow.Pow) *Client {
+type Client struct {
+	address  string
+	log      *slog.Logger
+	pow      Solver
+	connFunc func(network, address string) (net.Conn, error)
+}
+
+func New(address string, log *slog.Logger, pow Solver) *Client {
+	return &Client{
+		address:  address,
+		log:      log,
+		pow:      pow,
+		connFunc: net.Dial,
+	}
+}
+
+func NewMock(address string, log *slog.Logger, pow Solver) *Client {
 	return &Client{
 		address: address,
 		log:     log,
@@ -28,7 +42,7 @@ func New(address string, log *slog.Logger, pow pow.Pow) *Client {
 }
 
 func (c *Client) Quote(ctx context.Context) (string, string, error) {
-	conn, err := net.Dial("tcp", c.address)
+	conn, err := c.connFunc("tcp", c.address)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to connect: %w", err)
 	}

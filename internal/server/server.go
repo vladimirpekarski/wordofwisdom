@@ -13,8 +13,8 @@ type Server struct {
 	host          string
 	port          string
 	log           *slog.Logger
-	book          Booker
-	pow           POWer
+	book          RandomQuoter
+	pow           ValidateGenerateChallenger
 	powDifficulty int
 	wg            sync.WaitGroup
 	listener      net.Listener
@@ -26,8 +26,8 @@ type Params struct {
 	Host          string
 	Port          string
 	Log           *slog.Logger
-	Book          Booker
-	Pow           POWer
+	Book          RandomQuoter
+	Pow           ValidateGenerateChallenger
 	PowDifficulty int
 }
 

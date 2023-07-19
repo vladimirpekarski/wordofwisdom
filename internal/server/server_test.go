@@ -13,14 +13,14 @@ import (
 )
 
 func TestServer_handleConnections_validated(t *testing.T) {
-	pow := mocks.NewPOWer(t)
+	pow := mocks.NewValidateGenerateChallenger(t)
 	pow.On("GenerateChallenge", 5).
 		Return(message.Challenge{RandomStr: "ab", HashPrefix: "00"}, nil).
 		On("Validate", message.Challenge{RandomStr: "ab", HashPrefix: "00"},
 			message.Solution{Hash: "ab", Nonce: 5}).
 		Return(true)
 
-	b := mocks.NewBooker(t)
+	b := mocks.NewRandomQuoter(t)
 	b.On("RandomQuote").
 		Return(book.Record{
 			Quote:  "some quote",
@@ -53,14 +53,14 @@ func TestServer_handleConnections_validated(t *testing.T) {
 }
 
 func TestServer_handleConnections_not_validated(t *testing.T) {
-	pow := mocks.NewPOWer(t)
+	pow := mocks.NewValidateGenerateChallenger(t)
 	pow.On("GenerateChallenge", 5).
 		Return(message.Challenge{RandomStr: "ab", HashPrefix: "00"}, nil).
 		On("Validate", message.Challenge{RandomStr: "ab", HashPrefix: "00"},
 			message.Solution{Hash: "ab", Nonce: 5}).
 		Return(false)
 
-	b := mocks.NewBooker(t)
+	b := mocks.NewRandomQuoter(t)
 
 	srv := NewMock(Params{
 		Log:           logger.New(env.Local),

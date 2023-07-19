@@ -12,13 +12,13 @@ import (
 	"github.com/vladimirpekarski/wordofwisdom/internal/message/gob"
 )
 
-//go:generate go run github.com/vektra/mockery/v2@v2.28.2 --name=Booker
-type Booker interface {
+//go:generate go run github.com/vektra/mockery/v2@v2.28.2 --name=RandomQuoter
+type RandomQuoter interface {
 	RandomQuote() book.Record
 }
 
-//go:generate go run github.com/vektra/mockery/v2@v2.28.2 --name=POWer
-type POWer interface {
+//go:generate go run github.com/vektra/mockery/v2@v2.28.2 --name=ValidateGenerateChallenger
+type ValidateGenerateChallenger interface {
 	GenerateChallenge(difficulty int) (message.Challenge, error)
 	Validate(ch message.Challenge, sl message.Solution) bool
 }
