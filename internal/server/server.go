@@ -13,15 +13,25 @@ import (
 	"github.com/vladimirpekarski/wordofwisdom/internal/book"
 	"github.com/vladimirpekarski/wordofwisdom/internal/message"
 	"github.com/vladimirpekarski/wordofwisdom/internal/message/gob"
-	"github.com/vladimirpekarski/wordofwisdom/internal/pow"
 )
+
+//go:generate go run github.com/vektra/mockery/v2@v2.28.2 --name=Booker
+type Booker interface {
+	RandomQuote() book.Record
+}
+
+//go:generate go run github.com/vektra/mockery/v2@v2.28.2 --name=POWer
+type POWer interface {
+	GenerateChallenge(difficulty int) (message.Challenge, error)
+	Validate(ch message.Challenge, sl message.Solution) bool
+}
 
 type Server struct {
 	host          string
 	port          string
 	log           *slog.Logger
-	book          book.Book
-	pow           pow.Pow
+	book          Booker
+	pow           POWer
 	powDifficulty int
 	wg            sync.WaitGroup
 	listener      net.Listener
@@ -33,8 +43,8 @@ type Params struct {
 	Host          string
 	Port          string
 	Log           *slog.Logger
-	Book          book.Book
-	Pow           pow.Pow
+	Book          Booker
+	Pow           POWer
 	PowDifficulty int
 }
 
@@ -53,6 +63,15 @@ func New(p Params) *Server {
 		listener:      l,
 		shutdown:      make(chan struct{}),
 		connection:    make(chan net.Conn),
+	}
+}
+
+func NewMock(p Params) *Server {
+	return &Server{
+		log:           p.Log,
+		book:          p.Book,
+		pow:           p.Pow,
+		powDifficulty: p.PowDifficulty,
 	}
 }
 

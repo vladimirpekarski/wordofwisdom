@@ -14,12 +14,6 @@ import (
 	"github.com/vladimirpekarski/wordofwisdom/internal/message"
 )
 
-type Power interface {
-	GenerateChallenge(difficulty int) (message.Challenge, error)
-	Solve(ctx context.Context, ch message.Challenge) (message.Solution, error)
-	Validate(ch message.Challenge, sl message.Solution) bool
-}
-
 type Pow struct {
 	Log         *slog.Logger
 	genStrFunc  func(int) (string, error)
