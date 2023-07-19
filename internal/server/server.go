@@ -1,10 +1,8 @@
 package server
 
 import (
-	"bytes"
 	"encoding/gob"
 	"fmt"
-	"github.com/vladimirpekarski/wordofwisdom/internal/pow"
 	"net"
 	"sync"
 	"time"
@@ -12,6 +10,8 @@ import (
 	"golang.org/x/exp/slog"
 
 	"github.com/vladimirpekarski/wordofwisdom/internal/book"
+	"github.com/vladimirpekarski/wordofwisdom/internal/message"
+	"github.com/vladimirpekarski/wordofwisdom/internal/pow"
 )
 
 type Server struct {
@@ -102,54 +102,47 @@ func (s *Server) handleConnection(conn net.Conn) {
 		return
 	}
 
-	buf := new(bytes.Buffer)
-	gobobj := gob.NewEncoder(buf)
-	err = gobobj.Encode(ch)
+	enc := gob.NewEncoder(conn)
+	dec := gob.NewDecoder(conn)
+
+	err = enc.Encode(ch)
 	if err != nil {
 		s.log.Error("failed to encode message", slog.String("error", err.Error()))
 		return
 	}
 
-	_, err = conn.Write(buf.Bytes())
-	if err != nil {
-		s.log.Error("failed to send message", slog.String("error", err.Error()))
-		return
-	}
-
-	dec := gob.NewDecoder(conn)
-
-	var sl pow.Solution
-
+	var sl message.Solution
 	if err := dec.Decode(&sl); err != nil {
 		s.log.Error("failed to decode message", slog.String("error", err.Error()))
 	}
 
 	if s.pow.Validate(ch, sl) {
-		s.log.Debug("passed validation")
+		s.log.Debug("validation passed")
 
 		q := s.book.RandomQuote()
 
-		rec := pow.Record{
-			Quote:  q.Quote,
-			Author: q.Author,
+		rec := message.BookRecord{
+			Quote:            q.Quote,
+			Author:           q.Author,
+			PassedValidation: true,
 		}
 
-		buf := new(bytes.Buffer)
-		gobobj := gob.NewEncoder(buf)
-		err = gobobj.Encode(rec)
+		err = enc.Encode(rec)
 		if err != nil {
 			s.log.Error("failed to encode message", slog.String("error", err.Error()))
 			return
 		}
+	} else {
+		s.log.Debug("validation failed")
 
-		_, err = conn.Write(buf.Bytes())
+		rec := message.BookRecord{}
+
+		err = enc.Encode(rec)
 		if err != nil {
-			s.log.Error("failed to send message", slog.String("error", err.Error()))
+			s.log.Error("failed to encode message", slog.String("error", err.Error()))
 			return
 		}
 	}
-
-	//responseStr := s.book.RandomQuote()
 }
 
 func (s *Server) Stop() {

@@ -1,11 +1,15 @@
 package client
 
 import (
-	"bytes"
 	"encoding/gob"
-	"github.com/vladimirpekarski/wordofwisdom/internal/pow"
-	"golang.org/x/exp/slog"
+	"errors"
+	"fmt"
 	"net"
+
+	"golang.org/x/exp/slog"
+
+	"github.com/vladimirpekarski/wordofwisdom/internal/message"
+	"github.com/vladimirpekarski/wordofwisdom/internal/pow"
 )
 
 type Client struct {
@@ -22,27 +26,23 @@ func New(address string, log *slog.Logger, pow pow.Pow) *Client {
 	}
 }
 
-func (c *Client) Wisdom() string {
+func (c *Client) Quote() (string, string, error) {
 	conn, err := net.Dial("tcp", c.address)
+
+	if err != nil {
+		return "", "", fmt.Errorf("failed to connect: %w", err)
+	}
+
 	defer func() {
 		_ = conn.Close()
 	}()
 
-	if err != nil {
-		c.log.Error("failed to dial",
-			slog.String("address", c.address),
-			slog.String("error", err.Error()))
-
-		return ""
-	}
-
+	enc := gob.NewEncoder(conn)
 	dec := gob.NewDecoder(conn)
 
-	var ch pow.Challenge
-
+	var ch message.Challenge
 	if err := dec.Decode(&ch); err != nil {
-		c.log.Error("failed to decode message", slog.String("error", err.Error()))
-		return ""
+		return "", "", fmt.Errorf("failed to decode: %w", err)
 	}
 
 	c.log.Info("message received",
@@ -50,28 +50,19 @@ func (c *Client) Wisdom() string {
 		slog.String("hash_prefix", ch.HashPrefix))
 
 	sol := c.pow.Solve(ch)
-
-	buf := new(bytes.Buffer)
-	gobobj := gob.NewEncoder(buf)
-	err = gobobj.Encode(sol)
+	err = enc.Encode(sol)
 	if err != nil {
-		c.log.Error("failed to encode message", slog.String("error", err.Error()))
-		return ""
+		return "", "", fmt.Errorf("failed to encode: %w", err)
 	}
 
-	_, err = conn.Write(buf.Bytes())
-	if err != nil {
-		c.log.Error("failed to send message", slog.String("error", err.Error()))
-		return ""
-	}
-
-	var rec pow.Record
+	var rec message.BookRecord
 	if err := dec.Decode(&rec); err != nil {
-		c.log.Error("failed to decode message", slog.String("error", err.Error()))
-		return ""
+		return "", "", fmt.Errorf("failed to decode: %w", err)
 	}
 
-	c.log.Info("quote", slog.String("quote", rec.Quote), slog.String("author", rec.Author))
+	if rec.PassedValidation {
+		return rec.Quote, rec.Author, nil
+	}
 
-	return ""
+	return "", "", errors.New("wrong solution")
 }

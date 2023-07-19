@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/vladimirpekarski/wordofwisdom/internal/message"
 	"golang.org/x/exp/rand"
 	"golang.org/x/exp/slog"
 	"strings"
@@ -14,35 +15,20 @@ type Pow struct {
 	Log *slog.Logger
 }
 
-type Challenge struct {
-	RandomStr  string
-	HashPrefix string
-}
-
-type Solution struct {
-	Hash  string
-	Nonce int
-}
-
-type Record struct {
-	Quote  string
-	Author string
-}
-
 func New(log *slog.Logger) Pow {
 	return Pow{
 		Log: log,
 	}
 }
 
-func (p Pow) GenerateChallenge(n, difficulty int) (Challenge, error) {
+func (p Pow) GenerateChallenge(n, difficulty int) (message.Challenge, error) {
 	randomStr, err := p.generateString(difficulty)
 	if err != nil {
-		return Challenge{}, fmt.Errorf("failed to generate string: %w", err)
+		return message.Challenge{}, fmt.Errorf("failed to generate string: %w", err)
 	}
 
 	hasPrefix := strings.Repeat("0", difficulty)
-	ch := Challenge{
+	ch := message.Challenge{
 		RandomStr:  randomStr,
 		HashPrefix: hasPrefix,
 	}
@@ -50,7 +36,7 @@ func (p Pow) GenerateChallenge(n, difficulty int) (Challenge, error) {
 	return ch, nil
 }
 
-func (p Pow) Solve(ch Challenge) Solution {
+func (p Pow) Solve(ch message.Challenge) message.Solution {
 	start := time.Now()
 	nonce := 0
 
@@ -60,7 +46,7 @@ func (p Pow) Solve(ch Challenge) Solution {
 			p.Log.Info("solved",
 				slog.Int("elapsed_time, ms", int(time.Since(start).Milliseconds())),
 				slog.Int("nonce", nonce))
-			return Solution{
+			return message.Solution{
 				Hash:  hash,
 				Nonce: nonce,
 			}
@@ -70,7 +56,7 @@ func (p Pow) Solve(ch Challenge) Solution {
 	}
 }
 
-func (p Pow) Validate(ch Challenge, sl Solution) bool {
+func (p Pow) Validate(ch message.Challenge, sl message.Solution) bool {
 	expectedHash := p.calcHash(fmt.Sprintf("%s%d", ch.RandomStr, sl.Nonce))
 	return strings.HasPrefix(expectedHash, ch.HashPrefix) && expectedHash == sl.Hash
 }

@@ -20,7 +20,8 @@ type Server struct {
 }
 
 type Client struct {
-	Address string `yaml:"address" env-default:"server:8080" env-required:"true"`
+	Address     string `yaml:"address" env-default:"server:8080" env-required:"true"`
+	Connections int    `yaml:"connections" env-default:"1" env-required:"true"`
 }
 
 func MustLoad() *Config {
