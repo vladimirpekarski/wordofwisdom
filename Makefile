@@ -8,3 +8,6 @@ server:
 client:
 	go run ./cmd/client
 
+.PHONY: tests
+tests:
+	go test -race ./...

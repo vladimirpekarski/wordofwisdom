@@ -98,7 +98,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 		_ = conn.Close()
 	}()
 
-	ch, err := s.pow.GenerateChallenge(16, s.powDifficulty)
+	ch, err := s.pow.GenerateChallenge(s.powDifficulty)
 	if err != nil {
 		s.log.Error("failed to get challenge", slog.String("error", err.Error()))
 		return

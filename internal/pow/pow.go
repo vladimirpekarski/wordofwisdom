@@ -14,18 +14,34 @@ import (
 	"github.com/vladimirpekarski/wordofwisdom/internal/message"
 )
 
+type Power interface {
+	GenerateChallenge(difficulty int) (message.Challenge, error)
+	Solve(ctx context.Context, ch message.Challenge) (message.Solution, error)
+	Validate(ch message.Challenge, sl message.Solution) bool
+}
+
 type Pow struct {
-	Log *slog.Logger
+	Log         *slog.Logger
+	genStrFunc  func(int) (string, error)
+	calcHashFun func(string) string
 }
 
 func New(log *slog.Logger) Pow {
+	return Pow{
+		Log:         log,
+		genStrFunc:  generateString,
+		calcHashFun: calcHash,
+	}
+}
+
+func NewMock(log *slog.Logger) Pow {
 	return Pow{
 		Log: log,
 	}
 }
 
-func (p Pow) GenerateChallenge(n, difficulty int) (message.Challenge, error) {
-	randomStr, err := p.generateString(difficulty)
+func (p Pow) GenerateChallenge(difficulty int) (message.Challenge, error) {
+	randomStr, err := p.genStrFunc(difficulty)
 	if err != nil {
 		return message.Challenge{}, fmt.Errorf("failed to generate string: %w", err)
 	}
@@ -48,7 +64,7 @@ func (p Pow) Solve(ctx context.Context, ch message.Challenge) (message.Solution,
 		case <-ctx.Done():
 			return message.Solution{}, ctx.Err()
 		default:
-			hash := p.calcHash(fmt.Sprintf("%s%d", ch.RandomStr, nonce))
+			hash := p.calcHashFun(fmt.Sprintf("%s%d", ch.RandomStr, nonce))
 			if strings.HasPrefix(hash, ch.HashPrefix) {
 				p.Log.Info("solved",
 					slog.Int("elapsed_time, ms", int(time.Since(start).Milliseconds())),
@@ -65,11 +81,11 @@ func (p Pow) Solve(ctx context.Context, ch message.Challenge) (message.Solution,
 }
 
 func (p Pow) Validate(ch message.Challenge, sl message.Solution) bool {
-	expectedHash := p.calcHash(fmt.Sprintf("%s%d", ch.RandomStr, sl.Nonce))
+	expectedHash := p.calcHashFun(fmt.Sprintf("%s%d", ch.RandomStr, sl.Nonce))
 	return strings.HasPrefix(expectedHash, ch.HashPrefix) && expectedHash == sl.Hash
 }
 
-func (p Pow) generateString(n int) (string, error) {
+func generateString(n int) (string, error) {
 	bytes := make([]byte, n)
 	_, err := rand.Read(bytes)
 
@@ -80,7 +96,7 @@ func (p Pow) generateString(n int) (string, error) {
 	return hex.EncodeToString(bytes), err
 }
 
-func (p Pow) calcHash(data string) string {
+func calcHash(data string) string {
 	hash := sha256.Sum256([]byte(data))
 	return hex.EncodeToString(hash[:])
 }
