@@ -20,8 +20,8 @@ func TestServer_handleConnections_validated(t *testing.T) {
 			message.Solution{Hash: "ab", Nonce: 5}).
 		Return(true)
 
-	b := mocks.NewRandomQuoter(t)
-	b.On("RandomQuote").
+	b := mocks.NewRandomRecordGetter(t)
+	b.On("GetRandomRecord").
 		Return(book.Record{
 			Quote:  "some quote",
 			Author: "some author",
@@ -60,7 +60,7 @@ func TestServer_handleConnections_not_validated(t *testing.T) {
 			message.Solution{Hash: "ab", Nonce: 5}).
 		Return(false)
 
-	b := mocks.NewRandomQuoter(t)
+	b := mocks.NewRandomRecordGetter(t)
 
 	srv := NewMock(Params{
 		Log:           logger.New(env.Local),

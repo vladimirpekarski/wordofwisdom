@@ -35,7 +35,7 @@ func main() {
 	for i := 0; i < conns; i++ {
 		go func() {
 			defer wg.Done()
-			quote, author, err := c.Quote(ctx)
+			quote, author, err := c.GetQuote(ctx)
 			if err != nil {
 				log.Error("failed to get quote", slog.String("error", err.Error()))
 				return

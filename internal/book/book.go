@@ -28,7 +28,7 @@ func New() (Book, error) {
 	return b, nil
 }
 
-func (q Book) RandomQuote() Record {
+func (q Book) GetRandomRecord() Record {
 	s := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(s)
 	idx := r.Intn(len(q.Quotes))

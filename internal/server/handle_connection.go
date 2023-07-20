@@ -12,9 +12,9 @@ import (
 	"github.com/vladimirpekarski/wordofwisdom/internal/message/gob"
 )
 
-//go:generate go run github.com/vektra/mockery/v2@v2.28.2 --name=RandomQuoter
-type RandomQuoter interface {
-	RandomQuote() book.Record
+//go:generate go run github.com/vektra/mockery/v2@v2.28.2 --name=RandomRecordGetter
+type RandomRecordGetter interface {
+	GetRandomRecord() book.Record
 }
 
 //go:generate go run github.com/vektra/mockery/v2@v2.28.2 --name=ValidateGenerateChallenger
@@ -50,7 +50,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 	if s.pow.Validate(ch, sl) {
 		s.log.Debug("validation passed")
 
-		q := s.book.RandomQuote()
+		q := s.book.GetRandomRecord()
 
 		rec := message.BookRecord{
 			Quote:            q.Quote,

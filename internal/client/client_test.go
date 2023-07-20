@@ -2,15 +2,16 @@ package client
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
-	"github.com/vladimirpekarski/wordofwisdom/internal/message/gob"
 	"net"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/vladimirpekarski/wordofwisdom/internal/client/mocks"
 	"github.com/vladimirpekarski/wordofwisdom/internal/env"
 	"github.com/vladimirpekarski/wordofwisdom/internal/lib/logger"
 	"github.com/vladimirpekarski/wordofwisdom/internal/message"
+	"github.com/vladimirpekarski/wordofwisdom/internal/message/gob"
 )
 
 func TestClient_Quote_Solved(t *testing.T) {
@@ -53,7 +54,7 @@ func TestClient_Quote_Solved(t *testing.T) {
 		_ = gob.SendMessage(serv, rec)
 	}()
 
-	quote, author, err := client.Quote(ctx)
+	quote, author, err := client.GetQuote(ctx)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "quote", quote)
@@ -98,7 +99,7 @@ func TestClient_Quote_NotSolved(t *testing.T) {
 		_ = gob.SendMessage(serv, rec)
 	}()
 
-	quote, author, err := client.Quote(ctx)
+	quote, author, err := client.GetQuote(ctx)
 
 	assert.Error(t, err)
 	assert.Equal(t, "", quote)

@@ -41,7 +41,7 @@ func NewMock(address string, log *slog.Logger, pow Solver) *Client {
 	}
 }
 
-func (c *Client) Quote(ctx context.Context) (string, string, error) {
+func (c *Client) GetQuote(ctx context.Context) (string, string, error) {
 	conn, err := c.connFunc("tcp", c.address)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to connect: %w", err)
