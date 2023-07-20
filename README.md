@@ -1,7 +1,7 @@
 # wordofwisdom
 
 TCP server/client to demonstrate proof of work (pow) form of cryptographic proof.
-Challenge–response protocols is used. sha256 is used because it's widely used in cryptography and 
+Challenge–response protocol is used. sha256 is used because it's widely used in cryptography and 
 go has standard package for it.
 
 ### Run
