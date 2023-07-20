@@ -9,6 +9,7 @@ go has standard package for it.
   > docker-compose up --build
 - local:
   > make server
+
   > make client
 
 ### Tests:
@@ -18,7 +19,7 @@ go has standard package for it.
 - config/docker_compose.yaml - applied in docker-compose
 - config/local.yaml - applied when launch locally
 
-### sequencediagram
+### Sequence Diagram
 ![wordofwisdom.png](docs/wordofwisdom.png)
 
 ### TODO
